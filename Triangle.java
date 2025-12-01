@@ -11,6 +11,7 @@ public class Triangle {
         this.point3 = point3;
     }
 
+
     //求三角形周长
     public double perimeter() {
         double l1 = getLen(point1, point2);
