@@ -1,4 +1,4 @@
-package com.student;
+package com.stupra;
 
 public class Student {
     //身份证
