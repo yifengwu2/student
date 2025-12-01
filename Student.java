@@ -14,10 +14,7 @@ public class Student {
 
     private final int age;
 
-    private  final Score socre;
-
-    private Builder builder;
-
+    private  final Score score;
 
     private Student(Builder builder) {
         this.idCard = builder.idCard;
@@ -26,7 +23,7 @@ public class Student {
         this.number = builder.number;
         this.name = builder.name;
         this.sex = builder.sex;
-        this.socre=builder.socre;
+        this.score =builder.socre;
     }
 
 
@@ -103,26 +100,26 @@ public class Student {
                 ", name='" + name + '\'' +
                 ", sex='" + sex + '\'' +
                 ", age=" + age +
-                ", socre=" + socre +
+                ", score=" + score +
                 '}';
     }
 
     static class Score {
         int EnglishScore;
-        int JavaSocrere;
+        int JavaScore;
         int MathScore;
 
-        public Score(int englishSocre, int javaSocrere, int mathSocre) {
-            EnglishScore = englishSocre;
-            JavaSocrere = javaSocrere;
-            MathScore = mathSocre;
+        public Score(int EnglishScore, int JavaScore, int MathScore) {
+            this.EnglishScore = EnglishScore;
+            this.JavaScore = JavaScore;
+            this.MathScore = MathScore;
         }
 
         @Override
         public String toString() {
             return "{" +
                     "EnglishScore=" + EnglishScore +
-                    ", JavaSocrere=" + JavaSocrere +
+                    ", JavaScore=" + JavaScore +
                     ", MathScore=" + MathScore +
                     '}';
         }
@@ -130,7 +127,15 @@ public class Student {
 
     public static void main(String[] args) {
         Score score = new Score(13, 42, 32);
-        Student student = new Builder().setSocre(score).setAge(11).setName("xx").setIdCard(123).setSub("fas").setSex("男").setNumber(1324).build();
+        Student student = new Builder()
+                .setSocre(score)
+                .setAge(11)
+                .setName("xx")
+                .setIdCard(123)
+                .setSub("fas")
+                .setSex("男")
+                .setNumber(1324)
+                .build();
         System.out.println(student);
 
     }
