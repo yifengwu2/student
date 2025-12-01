@@ -10,7 +10,6 @@ public class Line {
         this.start = start;
         this.end = end;
     }
-
     //获取线段长度
     public double getLen() {
         Point startpoint = getStart();
