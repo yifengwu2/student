@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Slf4j(topic = "GuardedObject")
-public class GuardedObject {
+class GuardedObject {
     private int id;
     private Object response;
 
@@ -49,6 +49,11 @@ public class GuardedObject {
             this.notifyAll();
         }
     }
+
+//    public static void removeGuardedObject(int id) {
+//        Map<Integer, GuardedObject> boxes = Mailboxes.getBoxes();
+//        boxes.remove(id);
+//    }
 }
 
 //中间层面，存guarded
@@ -70,9 +75,16 @@ class Mailboxes {
         return boxes.get(id);
     }
 
+    public static Map<Integer, GuardedObject> getBoxes() {
+        return boxes;
+    }
 
     public static Set<Integer> getIds() {
         return boxes.keySet();
+    }
+
+    public static void removeGuardedObject(int id) {
+        boxes.remove(id);
     }
 }
 
@@ -96,10 +108,35 @@ class PostMan extends Thread {
         this.mail = mail;
     }
 
-
     @Override
     public void run() {
         GuardedObject guardedObject = Mailboxes.getGuardedObject(id);
-        guardedObject.complete(mail + id);
+        if (guardedObject != null) {
+            guardedObject.complete(mail + id);
+            Mailboxes.removeGuardedObject(id);
+        }
+
+    }
+}
+
+class Test {
+    public static void main(String[] args) {
+        for (int i = 0; i < 3; i++) {
+            new People().start();
+        }
+        Sleeper.sleep(1);
+        for (Integer id : Mailboxes.getIds()) {
+            new PostMan(id, "内容" + id).start();
+        }
+    }
+
+    static class Sleeper {
+        public static void sleep(int i) {
+            try {
+                Thread.sleep(i * 1000L);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 }
