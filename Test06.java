@@ -48,5 +48,16 @@ class Microwave extends Application {
     }
 }
 public class Test06{
+    public static void main(String[] args) {
+        // ✅ 使用 ArrayList（可变、安全、推荐）
+        List<Application> appliances = new ArrayList<>();
+        appliances.add(new Microwave());
+        appliances.add(new Television());
+        appliances.add(new WashMachine());
+        appliances.add(new Refrigerator());
 
+        // 启动所有电器
+        AppUtil.start(appliances);
+
+    }
 }

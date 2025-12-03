@@ -10,7 +10,7 @@ public class Teacher {
     private final int age;
     private final int teachTime;
 
-    private Teacher(Builder builder) {
+    Teacher(Builder builder) {
         this.idCard = builder.idCard;
         this.teacherId = builder.teacherId;
         this.sub = builder.sub;
