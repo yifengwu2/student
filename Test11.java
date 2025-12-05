@@ -43,7 +43,7 @@ class Circle1 {
         private int x;
         private int y;
 
-        public CirclePoint(int x, int y) {
+        private CirclePoint(int x, int y) {
             this.x = x;
             this.y = y;
         }

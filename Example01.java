@@ -4,8 +4,7 @@ public class Example01 {
     public static void main(String[] args) {
         Computer computer1 = new Computer("s");
         Lamp lamp1 = new Lamp();
-        Employee employee = new Employee(computer1, lamp1);
-        employee.work();
+        Employee employee = new Employee("小明", computer1, lamp1);
         employee.work();
         employee.leave();
     }
@@ -77,10 +76,12 @@ class Computer implements Switch {
 }
 
 class Employee {
+    private String name;
     private final Switch computer;
     private final Switch lamp;
 
-    public Employee(Switch computer, Switch lamp) {
+    public Employee(String name, Switch computer, Switch lamp) {
+        this.name = name;
         this.computer = computer;
         this.lamp = lamp;
     }
@@ -88,7 +89,7 @@ class Employee {
     public void work() {
         System.out.println("开始工作");
         computer.open();
-        lamp.open();
+        lamp.close();
     }
 
     public void leave() {
