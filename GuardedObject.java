@@ -52,7 +52,7 @@ class GuardedObject {
 
 //    public static void removeGuardedObject(int id) {
 //        Map<Integer, GuardedObject> boxes = Mailboxes.getBoxes();
-//        boxes.remove(id);
+//        boxes.move(id);
 //    }
 }
 

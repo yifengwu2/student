@@ -1,5 +1,8 @@
 package com.stupra;
 
+/**
+ * 不就是代码复用吗，子类super给父类赋值，然后复用他的属性，如果自己需要拓展属性自己再加并初始化
+ */
 abstract class Teacher0 {
     private int baseSalary;
     private int hourlySubsidy;
@@ -38,7 +41,6 @@ class Lecture extends Teacher0 {
     public Lecture(int time) {
         super(2600, 55, time);
     }
-
 }
 
 public class Test07 {
