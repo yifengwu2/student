@@ -1,18 +1,109 @@
 package com.stupra;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
+//usb接口
 interface Usb {
     void read();
 
     void write(String message);
 }
 
+//处理器
+interface Handler {
+    //设置下一个
+    void setNext(Handler handle);
+
+    //处理成功转接给下一个
+    boolean handle(LoginContext loginContext);
+}
+
+@Setter
+@Getter
+class LoginContext {
+    private String name;
+    private String password;
+    private String role;
+    private int loginTime;
+    private boolean success;
+
+    public LoginContext(String name, String password, String role, int loginTime, boolean success) {
+        this.name = name;
+        this.password = password;
+        this.role = role;
+        this.loginTime = loginTime;
+        this.success = success;
+    }
+
+}
+
+@Slf4j(topic = "ConnectCheckHandler")
+class ConnectCheckHandler implements Handler {
+    private Handler next;
+
+    @Override
+    public void setNext(Handler handle) {
+        this.next = handle;
+    }
+
+    @Override
+    public boolean handle(LoginContext lcx) {
+        if (lcx.getName() != null && !lcx.getPassword().trim().isEmpty()) {
+            log.debug(" 连接检查通过：用户 {} 已就绪", lcx.getName());
+            return next != null ? next.handle(lcx) : true;
+        } else {
+            log.warn("❌ 连接失败：用户名为空");
+            return false;
+        }
+    }
+}
+
+@Slf4j(topic = "RootCheckHandler")
+class RootCheckHandler implements Handler {
+    private Handler next;
+
+    @Override
+    public void setNext(Handler handle) {
+        this.next = handle;
+    }
+
+    @Override
+    public boolean handle(LoginContext ctx) {
+        if ("admin".equals(ctx.getRole())) {
+            return next != null ? next.handle(ctx) : true;
+        } else {
+            log.warn("用户权限不足");
+            return false;
+        }
+    }
+}
+
 @Slf4j
+class TimeOutCheckHandler implements Handler {
+    private Handler next;
+
+    @Override
+    public void setNext(Handler handle) {
+    }
+
+    @Override
+    public boolean handle(LoginContext loginContext) {
+        if (loginContext.getLoginTime() > 10) {
+            log.debug("请求超时，时间超过{}", loginContext.getLoginTime());
+            return false;
+        }
+        return true;
+    }
+}
+
+
+//usb工厂创建对象
+@Slf4j(topic = "UsbFactory")
 class UsbFactory {
     private static final Map<String, Usb> map = new HashMap<>();
 
@@ -53,6 +144,7 @@ class UsbFactory {
     }
 }
 
+//手机
 class Phone implements Usb {
     private String name;
 
@@ -95,6 +187,7 @@ class Phone implements Usb {
     }
 }
 
+//硬盘
 class Harddisk implements Usb {
     private String name;
     private String contoent;
@@ -135,6 +228,7 @@ class Harddisk implements Usb {
     }
 }
 
+//电脑完成对所有usb的操作
 class Computer1 implements Usb {
     List<Usb> usbs;
 
