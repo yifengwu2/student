@@ -57,7 +57,7 @@ class ConnectCheckHandler implements Handler {
             log.debug(" 连接检查通过：用户 {} 已就绪", lcx.getName());
             return next != null ? next.handle(lcx) : true;
         } else {
-            log.warn("❌ 连接失败：用户名为空");
+            log.warn("连接失败：用户名为空");
             return false;
         }
     }
@@ -89,6 +89,7 @@ class TimeOutCheckHandler implements Handler {
 
     @Override
     public void setNext(Handler handle) {
+        this.next = handle;
     }
 
     @Override
@@ -266,10 +267,24 @@ public class Example02 {
         Phone phone = new Phone("iphone");
         Harddisk harddisk = new Harddisk("硬盘");
 
+        //组装
+        LoginContext ctx = new LoginContext("小明", "123", "admin", 4, false);
+        ConnectCheckHandler conn = new ConnectCheckHandler();
+        RootCheckHandler root = new RootCheckHandler();
+        TimeOutCheckHandler time = new TimeOutCheckHandler();
+        conn.setNext(root);
+        root.setNext(time);
+
+
         list.add(phone);
         list.add(harddisk);
         Computer1 computer = new Computer1(list);
-        computer.writeTo(phone, "hello");
+        if (conn.handle(ctx)) {
+            System.out.println("登录/写入通过，执行业务...");
+            computer.writeTo(phone, "hello");
+        } else {
+            System.out.println("被责任链拦截！");
+        }
         computer.read();
 
     }
