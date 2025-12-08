@@ -100,7 +100,7 @@ class Employee {
 
     @Override
     public String toString() {
-        return "Employee{" +
+        return "Servant{" +
                 "computer=" + computer +
                 ", lamp=" + lamp +
                 '}';
