@@ -12,7 +12,7 @@ public class Example09 {
             new Producer("生产" + i).start();
         }
         //五个消费者
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 3; i++) {
             new Consumer("消费" + i).start();
         }
     }
