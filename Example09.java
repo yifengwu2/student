@@ -18,6 +18,14 @@ public class Example09 {
         for (int i = 0; i < 3; i++) {
             new Consumer("消费者" + i).start();
         }
+        try {
+            Thread.sleep(30);
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        Storehouse storehouse = Storehouse.getInstance();
+        storehouse.getStatue();
+
     }
 }
 
@@ -62,6 +70,9 @@ class Producer extends Thread {
 class Storehouse {
     private static final int cap = 10;
     private static volatile Storehouse instance;
+    final Deque<String> stack = new LinkedList<>();
+    private int totalProduced = 0;
+    private int totalConsumer = 0;
 
     private Storehouse() {
     }
@@ -78,8 +89,6 @@ class Storehouse {
         return instance;
     }
 
-    final Deque<String> stack = new LinkedList<>();
-
     //入栈
     public void push(String pro) {
         synchronized (stack) {
@@ -94,6 +103,7 @@ class Storehouse {
             stack.addFirst(pro);
             //唤醒等待的消费者
             stack.notifyAll();
+            totalProduced++;
         }
     }
 
@@ -112,7 +122,18 @@ class Storehouse {
             //当容量满时弹出一个唤醒
             String product = stack.pollLast();
             stack.notifyAll();
+            totalConsumer++;
             return product;
+        }
+    }
+
+    //获取当前运行状态
+    public void getStatue() {
+        synchronized (stack) {
+            log.debug("仓库状态:容量={} | 当前={}/{} | 生产={} | 消费={} | 空闲率={}",
+                    cap, getSize(), cap, totalProduced, totalConsumer, (100.0 * (cap - stack.size())) / cap
+            );
+
         }
     }
 
@@ -135,6 +156,7 @@ class Storehouse {
                     throw new RuntimeException("Interrupted", e);
                 }
             }
+            totalConsumer++;
             return stack.pollLast();
         }
     }
@@ -160,8 +182,12 @@ class Consumer extends Thread {
     public void run() {
         Storehouse storehouse = Storehouse.getInstance();
         for (int i = 0; i < 10; i++) {
-            String pop = storehouse.pop();
-            log.debug("{}消费{}", getName(), pop);
+            String product = storehouse.pop(2000);
+            if (product == null) {
+                log.error("{} 等不到货，主动退出第 {} 次消费", getName(), i + 1);
+            } else {
+                log.info("{} ← 消费成功：{}", getName(), product);
+            }
         }
     }
 }
