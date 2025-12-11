@@ -6,25 +6,39 @@ package com.stupra;
  * 其实门应该是开着的，但是他下一次检测的仍然是关闭状态。
  * “写覆盖”（Write Tearing）：
  * 两个线程对同一变量反复写，后写的覆盖先写的，系统丢失了关键事实。
+ * volatile写屏障以上代码同步到主存中
+ *读屏障是将共享变量以下代码从主存中读
  */
 class DoorController {
-    private static  volatile DoorController instance;
+    private static volatile DoorController instance;
 
     private DoorController() {
         System.out.println("正在初始化传感器");
         try {
             Thread.sleep(1000);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
         System.out.println("初始化完成");
     }
 
+    //外层不加保护同时进入，然后等锁排队，
+    // 到第二个if是为了防止一个线程用锁结束放时其他线程进入在创建对象。
+    // 外层在加if是为了后面几次提速吧防止在阻塞锁等待
+    //既然对外层又加了if判断且不在锁内，那么这时候后面其他线程在访问到这里的时候不保证他的可见性了
+    //他可能读缓存中的，因此又要加volatile
     public static DoorController getInstance() {
-        synchronized (DoorController.class) {
-            if (instance == null) {
-                instance = new DoorController();
+        //外层无volatile，读可能命中旧缓存 → 导致重复进锁，
+        // 那不就是读旧缓存的重复创建对象嘛，虽然对象已经创建了
+        if (instance == null) {
+            synchronized (DoorController.class) {
+                //里面这个已经禁止指令重排了，还加volatile
+                //还防止多个线程获取锁后new多个对象
+                if (instance == null) {
+                    instance = new DoorController();
+                }
             }
-            return instance;
         }
+        return instance;
     }
 
     private volatile boolean open = true; // true=开门中/已开；false=正在关/已关
