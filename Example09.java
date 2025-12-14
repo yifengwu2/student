@@ -56,7 +56,7 @@ class Producer extends Thread {
 //                    System.out.println(e.getMessage());
 //                }
 //            }
-//            storehouse.push(product);
+//            storehouse.put(product);
 //            storehouse.stack.notifyAll();
 //        }
 
