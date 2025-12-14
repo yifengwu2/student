@@ -10,8 +10,16 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * 自定义线程池
  */
+@Slf4j(topic = "TestPool")
 public class TestPool {
     public static void main(String[] args) {
+        ThreadPool threadPool = new ThreadPool(2, 1000L, TimeUnit.MILLISECONDS, 10);
+        for (int i = 0; i < 3; i++) {
+            int d = i;
+            threadPool.execute(() -> {
+                log.debug("{}", d);
+            });
+        }
 
     }
 }
@@ -46,13 +54,14 @@ class ThreadPool {
         synchronized (workers) {
             if (workers.size() < coreSize) {
                 Worker worker = new Worker(task);
+                log.debug("新增worker{}，{}", worker, task);
                 workers.add(worker);
                 worker.start();
             } else {
+                log.debug("加入任务队列{}", task);
                 blockingQueue.put(task);
             }
         }
-
     }
 
     private class Worker extends Thread {
@@ -68,6 +77,7 @@ class ThreadPool {
             //2)当task执行完毕，再接着从任务队列获取任务
             while (task != null || (task = blockingQueue.take()) != null) {
                 try {
+                    log.debug("正在执行...{}", task);
                     task.run();
                 } catch (Exception e) {
                     log.debug("错误信息{}", e.getMessage());
@@ -76,14 +86,13 @@ class ThreadPool {
                 }
             }
             synchronized (workers) {
+                log.debug("worker被移除{}", this);
                 workers.remove(this);
             }
         }
 
     }
-
 }
-
 
 @Slf4j(topic = "BlockingQueue")
 class BlockingQueue<T> {
