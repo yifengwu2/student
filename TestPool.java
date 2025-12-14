@@ -121,11 +121,35 @@ class BlockingQueue<T> {
                     fullWaitSet.await();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    log.debug("当前{}线程被打断,{}", Thread.currentThread().getName(), e.getMessage());
+                    log.debug("当前线程被打断,{}", e.getMessage());
                 }
             }
-            deque.push(task);
+            deque.addLast(task);
             emptyWaitSet.signalAll();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    //存放任务(带超时)
+    public boolean offer(T task, long timeout, TimeUnit timeUnit) {
+        lock.lock();
+        try {
+            long nanos = timeUnit.toNanos(timeout);
+            while (deque.size() == capacity) {
+                if (nanos <= 0) {
+                    return false;
+                }
+                try {
+                    nanos = fullWaitSet.awaitNanos(nanos);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.debug("线程 {} 被中断", Thread.currentThread().getName(), e);
+                    return false;
+                }
+            }
+            deque.offerLast(task);
+            return true;
         } finally {
             lock.unlock();
         }
