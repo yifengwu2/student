@@ -60,6 +60,11 @@ class ThreadPool {
             } else {
                 log.debug("加入任务队列{}", task);
                 blockingQueue.put(task);
+                //1）队列满了就死等
+                //2）队列满了等待timeout秒
+                //3）让调用者放弃任务执行
+                //4）让调用者抛出异常
+                //5）让调用者自己执行任务
             }
         }
     }
@@ -125,7 +130,7 @@ class BlockingQueue<T> {
                 }
             }
             deque.addLast(task);
-            emptyWaitSet.signalAll();
+            emptyWaitSet.signal();
         } finally {
             lock.unlock();
         }
@@ -137,6 +142,7 @@ class BlockingQueue<T> {
         try {
             long nanos = timeUnit.toNanos(timeout);
             while (deque.size() == capacity) {
+                log.debug("任务队列已满，当前{}任务进入{}等待", task, timeout);
                 if (nanos <= 0) {
                     return false;
                 }
@@ -149,6 +155,7 @@ class BlockingQueue<T> {
                 }
             }
             deque.offerLast(task);
+            emptyWaitSet.signal();
             return true;
         } finally {
             lock.unlock();
@@ -168,7 +175,7 @@ class BlockingQueue<T> {
                 }
             }
             T t = deque.removeFirst();
-            fullWaitSet.signalAll();
+            fullWaitSet.signal();
             return t;
 
         } finally {
@@ -195,7 +202,7 @@ class BlockingQueue<T> {
                 }
             }
             T poll = deque.poll();
-            fullWaitSet.signalAll();
+            fullWaitSet.signal();
             return poll;
         } finally {
             lock.unlock();
