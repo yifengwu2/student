@@ -13,13 +13,21 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j(topic = "TestPool")
 public class TestPool {
     public static void main(String[] args) {
-        ThreadPool threadPool = new ThreadPool(1, 1000, TimeUnit.MILLISECONDS, 1, ((task, blockingQueue) ->
-                blockingQueue.put(task)));
+        ThreadPool threadPool = new ThreadPool(1, 1000, TimeUnit.MILLISECONDS, 1, ((task, queue) ->
+                //1.死等
+//                queue.put(task)
+                //2.带超时的等待
+//                queue.offer(task, 500, TimeUnit.MILLISECONDS)
+                log.warn("【拒绝】任务 {} 因队列满被丢弃", task)
+              // 不要再调 queue.offer(...)！它已在 tryPut 中执行过了
+        ));
+
+
         for (int i = 0; i < 3; i++) {
             int d = i;
             threadPool.execute(() -> {
                 try {
-                    Thread.sleep(10000000L);
+                    Thread.sleep(1000L);
                 } catch (InterruptedException e) {
                     log.debug(e.getMessage());
                 }
@@ -54,7 +62,7 @@ class ThreadPool {
     private RejectPolicy<Runnable> policy;
 
     public ThreadPool(int coreSize, long timeout, TimeUnit timeUnit, int queueCap, RejectPolicy<Runnable> policy) {
-        this.blockingQueue = new BlockingQueue<>(queueCap);
+        this.blockingQueue = new BlockingQueue<>(queueCap,timeout,timeUnit);
         this.coreSize = coreSize;
         this.timeout = timeout;
         this.timeUnit = timeUnit;
@@ -73,7 +81,6 @@ class ThreadPool {
                 worker.start();
             } else {
                 log.debug("加入任务队列{}", task);
-
 //                blockingQueue.put(task);
                 blockingQueue.tryPut(policy, task);
 
@@ -130,10 +137,15 @@ class BlockingQueue<T> {
 
     private final int capacity;
 
-    public BlockingQueue(int capacity) {
+    private long timeout;
+    private TimeUnit timeUnit;
+
+    public BlockingQueue(int capacity, long timeout, TimeUnit timeUnit) {
         emptyWaitSet = lock.newCondition();
         this.capacity = capacity;
         fullWaitSet = lock.newCondition();
+        this.timeout = timeout;
+        this.timeUnit = timeUnit;
     }
 
     //存放任务
@@ -240,13 +252,9 @@ class BlockingQueue<T> {
 
     public void tryPut(RejectPolicy<T> policy, T task) {
         lock.lock();
-        try {//判断队列是否满
-            if (deque.size() == capacity) {
+        try {
+            if (!offer(task, timeout, timeUnit)) {
                 policy.reject(task, this);
-            } else {//有空闲
-                log.debug("加入任务队列{}", task);
-                deque.addLast(task);
-                emptyWaitSet.signal();
             }
         } finally {
             lock.unlock();
