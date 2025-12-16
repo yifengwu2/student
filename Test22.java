@@ -27,9 +27,7 @@ public class Test22 {
             System.out.println("All failed");
             System.out.println(e.getMessage());
         }
-
         System.out.println(o);
-
         executor.shutdown();
     }
 }
